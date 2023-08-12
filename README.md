@@ -1,5 +1,5 @@
-# triple-tree
-A technique to compress triples and query on compressed data
+# Triple Tree
+A technique to compress RDF triples and query on compressed RDF triples data
 
 **#Create dictionary from triple datatsets**
 
