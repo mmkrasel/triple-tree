@@ -5,15 +5,6 @@
 // Copyright   : Your copyright notice
 // Description : Hello World in C++, Ansi-style
 //============================================================================
-
-//============================================================================
-// Name        : RDF.cpp
-// Author      : Rasel
-// Version     :
-// Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
-//============================================================================
-
 //valgrind --leak-check=full  --track-origins=yes ./TT -q
 
 #include <iostream>
