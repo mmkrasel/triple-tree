@@ -51,7 +51,7 @@ A technique to compress RDF triples and query on compressed RDF triples data
 
 **#Search for triple pattern (with uri)**
 
-	./TT -s path_to_destination_triple_tree_directory subject_or_object_path triple_pattern
+	./TT -s path_to_triple_tree_directory subject_or_object_path triple_pattern
 
   Note: 
     - subject_or_object_path: 
