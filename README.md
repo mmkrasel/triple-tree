@@ -3,12 +3,12 @@ A technique to compress RDF triples and query on compressed RDF triples data
 
 **#Create dictionary from triple datatsets**
 
-	./TT -d path_to_source_NT_dataset_file path_to_destination_triple_tree_directory
+	./TT -d path_to_source_NT_dataset_file path_to_triple_tree_directory
 
 
 **#Compress TripleTable to TripleTree**
 
-	./TT -c path_to_destination_triple_tree_directory page_size
+	./TT -c path_to_triple_tree_directory page_size
 	
 	Note: 
 		- page_size can be 1 or 2 or 3 or 4 .........16..........32...
