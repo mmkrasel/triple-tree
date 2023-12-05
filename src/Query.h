@@ -23,7 +23,7 @@ class Query {
 	char SZ_PAGEID = 4;
 	char SZ_ID = 4;
 	uint8* buf;
-	PredicateId PRDCT_COUNT;
+	ComponentId PRDCT_COUNT;
 	TertiaryTable* ttrTable;
 	uint32 SS_PAGE_ID, SO_PAGE_ID, LO_PAGE_ID, LS_PAGE_ID, size_LO_INDEX;
 	PageId* INDEX_LO_PAGEIDs;
@@ -55,7 +55,7 @@ public:
 	PageId get_ls_page_id(Offset16 index);
 	void getAllByPOS();
 	uint32* FAW2OSIDs(uint32 f, uint32 t);
-	void add2Result(SubObjId s, PredicateId p, SubObjId o);
+	void add2Result(ComponentId s, ComponentId p, ComponentId o);
 	void decodeSubFAW(uint32 fromIndex, uint32 toIndex, uint32 pred, uint32 obj);
 	void decodeObjFAW(uint32 fromIndex, uint32 toIndex, uint32 pred, uint32 sub);
 	void getO4PS(uint32 p, uint32 s);

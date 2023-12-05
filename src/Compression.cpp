@@ -121,7 +121,7 @@ void Compression::initCompression(int ps, const char* datasetPath){
 void Compression::updateIndexTable(bool addNew, uint32 startId){
 	if(addNew){
 		PRDCT_COUNT++;
-		ttrTable = (TertiaryTable*)c.xrealloc((void*)ttrTable, (PRDCT_COUNT+1)*sizeof(TertiaryTable));
+		ttrTable = (TertiaryTable*)c.xrealloc((void*)ttrTable, (PRDCT_COUNT+1)*sizeof(TertiaryTable), (char*)"Compression::updateIndexTable 1");
 		ttrTable[PRDCT_COUNT].numSubPages = 0;
 		ttrTable[PRDCT_COUNT].sub_ids = (uint32*) malloc(SZ_ID);
 		ttrTable[PRDCT_COUNT].sub_page_ids = (PageId*) malloc(SZ_PAGEID);
@@ -141,16 +141,16 @@ void Compression::updateIndexTable(bool addNew, uint32 startId){
 	}
 }
 void Compression::start(int ps, const char* datasetPath){
-	cout << "Page Size: " << ps << endl;
+	cout << "@Compression::start:Page Size: " << ps << endl;
 	this->initCompression(ps, datasetPath);
-	int strLen = strlen(pathDir);
+	int strLen = strlen(datasetPath);
 	char* path = new char[strLen+32];
-	sprintf(path, "%s/triple_table.tt", pathDir);
-	cout << "Reading dataset: " << path << endl;
+	sprintf(path, "%s/triple_table.tt", datasetPath);
+	cout << "@Compression::start:Reading dataset: " << path << endl;
 	long tripleTableSize = c.getFileSize(path);
 	uint32 numTriplesInDB = tripleTableSize / 10;
-	cout << "#triples: " << numTriplesInDB << endl;
-	cout << "Reading triple table...." << endl;
+	cout << "@Compression::start:#triples: " << numTriplesInDB << endl;
+	cout << "@Compression::start:Reading triple table...." << endl;
 	TripleItem* ts  = (TripleItem*) malloc(numTriplesInDB*sizeof(TripleItem));
 	FILE* fStream = fopen(path, "rb");
 	fread(ts, sizeof(TripleItem), numTriplesInDB, fStream);
@@ -161,7 +161,7 @@ void Compression::start(int ps, const char* datasetPath){
 	//		cout << ts[i].sub << " x " << ts[i].pred << " x " << ts[i].obj << endl;
 	//	}
 	//}
-	cout << "Sorting by predicate ids...." << endl;
+	cout << "@Compression::start:Sorting by predicate ids...." << endl;
 	TripleItem *scratch = (TripleItem*) malloc(numTriplesInDB*sizeof(TripleItem));
 //	exit(1);
 	this->merge_sort_order_by_predicate(ts, 0, numTriplesInDB, scratch);
@@ -170,19 +170,19 @@ void Compression::start(int ps, const char* datasetPath){
 	//		cout << ts[i].sub << " x " << ts[i].pred << " x " << ts[i].obj << endl;
 	//	}
 	//}
-	cout << "Sorting by subject ids with same predicates...." << endl;
+	cout << "@Compression::start:Sorting by subject ids with same predicates...." << endl;
 	this->sort_by_subject(ts, 0, numTriplesInDB, scratch);
 	free(scratch);
 	scratch = NULL;
-	cout << "compressing for p->s->o paths..." << endl;
+	cout << "@Compression::start:compressing for p->s->o paths..." << endl;
 	this->subject_order_compression(ts, numTriplesInDB);
 
-	cout << "Sorting by object ids with same predicates...." << endl;
+	cout << "@Compression::start:Sorting by object ids with same predicates...." << endl;
 	scratch = (TripleItem*) malloc(numTriplesInDB*sizeof(TripleItem));
 	this->sort_by_object(ts, 0, numTriplesInDB, scratch);
 	free(scratch);
 	scratch = NULL;
-	cout << "compressing for p->o->s paths..." << endl;
+	cout << "@Compression::start:compressing for p->o->s paths..." << endl;
 	this->object_order_compression(ts, numTriplesInDB);
 //	for(uint32 i=1; i<numTriplesInDB; i++){
 //		if(ts[i].obj==0 || ts[i].obj==ts[i].sub || ts[i-1].obj==ts[i].obj){
@@ -206,7 +206,7 @@ void Compression::start(int ps, const char* datasetPath){
 ////    IDX_prdct[PRDCT_COUNT].obj_page_ids[0] = SO_PAGE_ID;
 ////    //IDX_prdct[PRDCT_COUNT].obj_offsets[0] = SS_page.numItems;
 //
-//    PropertyID32 sampleP = 0, sampleS = 0;
+//    ComponentId sampleP = 0, sampleS = 0;
 //    uint32 left = 0;
 //    uint32 size = 0;
 //    bool isExtended =  false;
@@ -268,7 +268,7 @@ void Compression::start(int ps, const char* datasetPath){
 	store_last_pages();
 	free(ts);
 	PRDCT_COUNT++;
-	fwrite(&PRDCT_COUNT, sizeof(PredicateId), 1, IDX_PRDCT_fileStream);
+	fwrite(&PRDCT_COUNT, sizeof(ComponentId), 1, IDX_PRDCT_fileStream);
 	for(int i=0; i<PRDCT_COUNT; i++){
 		ttrTable[i].numSubPages++;
 		fwrite(&ttrTable[i].numSubPages, SZ_PAGEID, 1, IDX_PRDCT_fileStream);
@@ -283,7 +283,7 @@ void Compression::start(int ps, const char* datasetPath){
 	}
 	fflush(IDX_PRDCT_fileStream);
 	fclose(IDX_PRDCT_fileStream);
-	cout << "\n\nCompression completed\n\n" << endl;
+	cout << "\n\n@Compression::start:Compression completed\n\n" << endl;
 	this->compressionFactor(ps);
 }
 void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInDB){
@@ -295,7 +295,7 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
     ttrTable[PRDCT_COUNT].sub_ids[0] = ts[0].sub;
     ttrTable[PRDCT_COUNT].sub_page_ids[0] = SS_PAGE_ID;
     ttrTable[PRDCT_COUNT].sub_offsets[0] = ss_page.numItems;
-    PropertyID32 sampleP, sampleS;
+    ComponentId sampleP, sampleS;
     uint32 left = 0;
     uint32 size = 0;
     bool isExtended =  false;
@@ -339,9 +339,9 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
 				store_ss_page(ts[i].sub);
 				//if(ss_page.numItems>0){
 					ttrTable[PRDCT_COUNT].numSubPages++;
-					ttrTable[PRDCT_COUNT].sub_ids = (uint32*)c.xrealloc((void*)ttrTable[PRDCT_COUNT].sub_ids, (ttrTable[PRDCT_COUNT].numSubPages+1)*SZ_ID);
-					ttrTable[PRDCT_COUNT].sub_page_ids = (PageId*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].sub_page_ids, (ttrTable[PRDCT_COUNT].numSubPages+1)*SZ_PAGEID);
-					ttrTable[PRDCT_COUNT].sub_offsets = (Offset16*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].sub_offsets, (ttrTable[PRDCT_COUNT].numSubPages+1)*SZ_OFFSET16);
+					ttrTable[PRDCT_COUNT].sub_ids = (uint32*)c.xrealloc((void*)ttrTable[PRDCT_COUNT].sub_ids, (ttrTable[PRDCT_COUNT].numSubPages+1)*SZ_ID, (char*)"Compression::subject_order_compression 1");
+					ttrTable[PRDCT_COUNT].sub_page_ids = (PageId*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].sub_page_ids, (ttrTable[PRDCT_COUNT].numSubPages+1)*SZ_PAGEID, (char*)"Compression::subject_order_compression 2");
+					ttrTable[PRDCT_COUNT].sub_offsets = (Offset16*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].sub_offsets, (ttrTable[PRDCT_COUNT].numSubPages+1)*SZ_OFFSET16, (char*)"Compression::subject_order_compression 3");
 					ttrTable[PRDCT_COUNT].sub_ids[ttrTable[PRDCT_COUNT].numSubPages] = ts[i].sub;
 					ttrTable[PRDCT_COUNT].sub_page_ids[ttrTable[PRDCT_COUNT].numSubPages] = SS_PAGE_ID+1;
 					ttrTable[PRDCT_COUNT].sub_offsets[ttrTable[PRDCT_COUNT].numSubPages] = 0;
@@ -355,11 +355,11 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
 			}
 			ss_page.numItems++;
 			if(ss_page.numItems==0){
-				cout << "SS_page.numItems became overflow" << endl;
+				cout << "Compression::subject_order_compression:SS_page.numItems became overflow" << endl;
 			}
-			ss_page.data = (uint32*)c.xrealloc((void*)ss_page.data, ss_page.numItems*SZ_ID);
-			ss_page.offsets = (Offset16*)c.xrealloc((void*)ss_page.offsets, ss_page.numItems*SZ_OFFSET16);
-			ss_page.numChildItems = (Offset16*)c.xrealloc((void*)ss_page.numChildItems, ss_page.numItems*SZ_OFFSET16);
+			ss_page.data = (uint32*)c.xrealloc((void*)ss_page.data, ss_page.numItems*SZ_ID, (char*)"Compression::subject_order_compression 4");
+			ss_page.offsets = (Offset16*)c.xrealloc((void*)ss_page.offsets, ss_page.numItems*SZ_OFFSET16, (char*)"Compression::subject_order_compression 5");
+			ss_page.numChildItems = (Offset16*)c.xrealloc((void*)ss_page.numChildItems, ss_page.numItems*SZ_OFFSET16, (char*)"Compression::subject_order_compression 6");
 			//ss_page.numChildItems = (PageId*)c.xrealloc((void*)ss_page.numChildItems, ss_page.numItems*SZ_PAGEID, "@start-2");
 			ss_page.data[ss_page.numItems-1] = ts[i].sub;
 			ss_page.offsets[ss_page.numItems-1] = lo_page.numItems;
@@ -370,7 +370,7 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
 				ss_page.child_page_ids[ss_page.run_length*2]++;
 			} else {
 				ss_page.run_length++;
-				ss_page.child_page_ids = (PageId*)c.xrealloc((void*)ss_page.child_page_ids, (ss_page.run_length+1)*2*SZ_PAGEID);
+				ss_page.child_page_ids = (PageId*)c.xrealloc((void*)ss_page.child_page_ids, (ss_page.run_length+1)*2*SZ_PAGEID, (char*)"Compression::subject_order_compression 7");
 				ss_page.child_page_ids[ss_page.run_length*2] = 1;
 				ss_page.child_page_ids[ss_page.run_length*2+1] = LO_PAGE_ID;
 			}
@@ -393,12 +393,13 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
 			lo_page.fWord = ts[i].obj;
 			lo_page.fWordType = 0;
 			lo_page.tWord = 0;
-			lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+1)*SZ_ID);
+			lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+1)*SZ_ID, (char*)"Compression::subject_order_compression 8");
 			lo_page.data[lo_page.numItems] = ts[i].obj;
 		}
 		isClosed = false;
 		//cout << i << endl;
 		if(ts[i].sub==510){
+			cout << "Compression::subject_order_compression: ";
 			cout << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << " " << ttrTable[PRDCT_COUNT].numSubPages << " " << ttrTable[PRDCT_COUNT].sub_page_ids[ttrTable[PRDCT_COUNT].numSubPages] << " ";
 			cout << ttrTable[PRDCT_COUNT].sub_offsets[ttrTable[PRDCT_COUNT].numSubPages] << " " << ss_page.numItems << " " << ss_page.data[ss_page.numItems-1] << " " << ss_page.offsets[ss_page.numItems-1] << " ";
 			cout << lo_page.data[lo_page.numItems-1] << " " << lo_page.data[lo_page.numItems] << endl;
@@ -408,7 +409,7 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
 		lo_page.ext_page_item_count = lo_page.numItems;
 	}
 	this->closeObjFAW(isExtended);
-	cout << "#Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
+	cout << "Compression::subject_order_compression: #Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
 }
 void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB){
 	SO_PAGE_ID = 0;
@@ -421,7 +422,7 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 	ttrTable[PRDCT_COUNT].obj_ids[0] = ts[0].obj;
 	ttrTable[PRDCT_COUNT].obj_page_ids[0] = SO_PAGE_ID;
 	ttrTable[PRDCT_COUNT].obj_offsets[0] = so_page.numItems;
-	PropertyID32 sampleP, sampleO;
+	ComponentId sampleP, sampleO;
 	uint32 left = 0;
 	uint32 size = 0;
 	bool isExtended =  false;
@@ -471,9 +472,9 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 				store_so_page(ts[i].obj);
 				//if(so_page.numItems>0){
 					ttrTable[PRDCT_COUNT].numObjPages++;
-					ttrTable[PRDCT_COUNT].obj_ids = (uint32*)c.xrealloc((void*)ttrTable[PRDCT_COUNT].obj_ids, (ttrTable[PRDCT_COUNT].numObjPages+1)*SZ_ID);
-					ttrTable[PRDCT_COUNT].obj_page_ids = (PageId*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].obj_page_ids, (ttrTable[PRDCT_COUNT].numObjPages+1)*SZ_PAGEID);
-					ttrTable[PRDCT_COUNT].obj_offsets = (Offset16*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].obj_offsets, (ttrTable[PRDCT_COUNT].numObjPages+1)*SZ_OFFSET16);
+					ttrTable[PRDCT_COUNT].obj_ids = (uint32*)c.xrealloc((void*)ttrTable[PRDCT_COUNT].obj_ids, (ttrTable[PRDCT_COUNT].numObjPages+1)*SZ_ID, (char*)"Compression::object_order_compression 1");
+					ttrTable[PRDCT_COUNT].obj_page_ids = (PageId*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].obj_page_ids, (ttrTable[PRDCT_COUNT].numObjPages+1)*SZ_PAGEID, (char*)"Compression::object_order_compression 2");
+					ttrTable[PRDCT_COUNT].obj_offsets = (Offset16*) c.xrealloc((void*)ttrTable[PRDCT_COUNT].obj_offsets, (ttrTable[PRDCT_COUNT].numObjPages+1)*SZ_OFFSET16, (char*)"Compression::object_order_compression 3");
 					ttrTable[PRDCT_COUNT].obj_ids[ttrTable[PRDCT_COUNT].numObjPages] = ts[i].obj;
 					ttrTable[PRDCT_COUNT].obj_page_ids[ttrTable[PRDCT_COUNT].numObjPages] = SO_PAGE_ID+1;
 					ttrTable[PRDCT_COUNT].obj_offsets[ttrTable[PRDCT_COUNT].numObjPages] = 0;
@@ -487,11 +488,11 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 			}
 			so_page.numItems++;
 			if(so_page.numItems==0){
-				cout << "SO_page.numItems became overflow" << endl; exit(1);
+				cout << "@Compression::object_order_compression:SO_page.numItems became overflow" << endl; exit(1);
 			}
-			so_page.data = (uint32*)c.xrealloc((void*)so_page.data, so_page.numItems*SZ_ID);
-			so_page.offsets = (Offset16*)c.xrealloc((void*)so_page.offsets, so_page.numItems*SZ_OFFSET16);
-			so_page.numChildItems = (Offset16*)c.xrealloc((void*)so_page.numChildItems, so_page.numItems*SZ_OFFSET16);
+			so_page.data = (uint32*)c.xrealloc((void*)so_page.data, so_page.numItems*SZ_ID, (char*)"Compression::object_order_compression 4");
+			so_page.offsets = (Offset16*)c.xrealloc((void*)so_page.offsets, so_page.numItems*SZ_OFFSET16, (char*)"Compression::object_order_compression 5");
+			so_page.numChildItems = (Offset16*)c.xrealloc((void*)so_page.numChildItems, so_page.numItems*SZ_OFFSET16, (char*)"Compression::object_order_compression 6");
 			//so_page.numChildItems = (PageId*)c.xrealloc((void*)so_page.numChildItems, so_page.numItems*SZ_PAGEID, "@start-2");
 			so_page.data[so_page.numItems-1] = ts[i].obj;
 			so_page.offsets[so_page.numItems-1] = ls_page.numItems;
@@ -502,7 +503,7 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 			} else {
 				so_page.run_length++;
 				//if(so_page.run_length==65535){ cout << " Here 1" << endl; exit(1);}
-				so_page.child_page_ids = (PageId*)c.xrealloc((void*)so_page.child_page_ids, (so_page.run_length+1)*2*SZ_PAGEID);
+				so_page.child_page_ids = (PageId*)c.xrealloc((void*)so_page.child_page_ids, (so_page.run_length+1)*2*SZ_PAGEID, (char*)"Compression::object_order_compression 7");
 				so_page.child_page_ids[so_page.run_length*2] = 1;
 				so_page.child_page_ids[so_page.run_length*2+1] = LS_PAGE_ID;
 			}
@@ -537,7 +538,7 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 	//}
 	//cout << PRDCT_COUNT << " " << ci << endl;
 	//cout << nc << " " << ec << endl;
-	cout << "#Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
+	cout << "@Compression::object_order_compression:#Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
 }
 void Compression::addID2SubFAW(uint32 id, bool isExtended){
 	long dif;
@@ -556,7 +557,7 @@ void Compression::addID2SubFAW(uint32 id, bool isExtended){
 	}
 	else {
 		if(ls_page.tWord==0){               // word @flag is a S-Word
-			ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+1)*SZ_ID);
+			ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+1)*SZ_ID, (char*)"Compression::addID2SubFAW 1");
 			ls_page.data[ls_page.numItems++] = ls_page.fWord;
 			ls_page.fWord = id;
 			increment = 1;
@@ -565,7 +566,7 @@ void Compression::addID2SubFAW(uint32 id, bool isExtended){
 			ls_page.tWord++;
 		}
 		else {
-			ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+2)*SZ_ID);
+			ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+2)*SZ_ID, (char*)"Compression::addID2SubFAW 2");
 			if(ls_page.fWordType == 2){
 				ls_page.data[ls_page.numItems++] = ls_page.fWord|0xC0000000;
 			}
@@ -594,11 +595,11 @@ void Compression::closeSubFAW(bool isExtended){
 	// close if new leaf page is opened :aka: extended page
 	int increment = 1;
 	if(ls_page.tWord==0){               // word @flag is a S-Word
-		ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+1)*SZ_ID);
+		ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+1)*SZ_ID, (char*)"Compression::closeSubFAW 1");
 		ls_page.data[ls_page.numItems++] = ls_page.fWord;
 	}
 	else {
-		ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+2)*SZ_ID);
+		ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, (ls_page.numItems+2)*SZ_ID, (char*)"Compression::closeSubFAW 2");
 		if(ls_page.fWordType == 2){
 			ls_page.data[ls_page.numItems++] = ls_page.fWord|0xC0000000;
 		}
@@ -656,7 +657,7 @@ bool Compression::store_lo_page(){
 		ss_page.numChildItems[ss_page.numItems-1] = 0;
 		if(ss_page.numItems > 1){
 			ss_page.run_length++;
-			ss_page.child_page_ids = (PageId*)c.xrealloc((void*)ss_page.child_page_ids, (ss_page.run_length+1)*2*SZ_PAGEID);
+			ss_page.child_page_ids = (PageId*)c.xrealloc((void*)ss_page.child_page_ids, (ss_page.run_length+1)*2*SZ_PAGEID, (char*)"Compression::store_lo_page 1");
 		}
 		ss_page.child_page_ids[ss_page.run_length*2] = 1;
 		ss_page.child_page_ids[ss_page.run_length*2+1] = (LO_PAGE_ID+1);
@@ -691,7 +692,7 @@ bool Compression::store_ls_page(){
 		if(so_page.numItems > 1){
 			so_page.run_length++;
 			//if(so_page.run_length==65535){ cout << " Here 2" << endl; exit(1);}
-			so_page.child_page_ids = (PageId*)c.xrealloc((void*)so_page.child_page_ids, (so_page.run_length+1)*2*SZ_PAGEID);
+			so_page.child_page_ids = (PageId*)c.xrealloc((void*)so_page.child_page_ids, (so_page.run_length+1)*2*SZ_PAGEID, (char*)"Compression::store_ls_page 1");
 		}
 		so_page.child_page_ids[so_page.run_length*2] = 1;
 		so_page.child_page_ids[so_page.run_length*2+1] = (LS_PAGE_ID+1);
@@ -809,7 +810,7 @@ void Compression::store_last_pages(){
 	fflush(LS_fileStream);
 	fclose(LS_fileStream);
 }
-PropertyID32 Compression::min_id(PropertyID32 x, PropertyID32 y){
+ComponentId Compression::min_id(ComponentId x, ComponentId y){
 	if(x < y){
 		return x;
 	}
@@ -817,16 +818,16 @@ PropertyID32 Compression::min_id(PropertyID32 x, PropertyID32 y){
 		return y;
 	}
 }
-void Compression::merge_sort_order_by_predicate(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch){
+void Compression::merge_sort_order_by_predicate(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch){
 	/* base case: one element */
 	if(right == left + 1){
 		return;
 	}
 	else{
-		PropertyID32 i = 0;
-		PropertyID32 length = right - left;
-		PropertyID32 midpoint_distance = length/2;
-		PropertyID32 l = left, r = left + midpoint_distance;
+		ComponentId i = 0;
+		ComponentId length = right - left;
+		ComponentId midpoint_distance = length/2;
+		ComponentId l = left, r = left + midpoint_distance;
 		merge_sort_order_by_predicate(input, left, left + midpoint_distance, scratch);
 		merge_sort_order_by_predicate(input, left + midpoint_distance, right, scratch);
 		for(i = 0; i < length; i++) {
@@ -842,15 +843,15 @@ void Compression::merge_sort_order_by_predicate(TripleItem *input, PropertyID32 
 		memcpy(&input[left], &scratch[0], (right-left)*sizeof(TripleItem));
 	}
 }
-void Compression::merge_sort_order_by_object(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch){
+void Compression::merge_sort_order_by_object(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch){
 	/* base case: one element */
 	if(right == left + 1){
 		return;
 	}
-	PropertyID32 i = 0;
-	PropertyID32 length = right - left;
-	PropertyID32 midpoint_distance = length/2;
-	PropertyID32 l = left, r = left + midpoint_distance;
+	ComponentId i = 0;
+	ComponentId length = right - left;
+	ComponentId midpoint_distance = length/2;
+	ComponentId l = left, r = left + midpoint_distance;
 	merge_sort_order_by_object(input, left, left + midpoint_distance, scratch);
 	merge_sort_order_by_object(input, left + midpoint_distance, right, scratch);
 	for(i = 0; i < length; i++) {
@@ -865,15 +866,15 @@ void Compression::merge_sort_order_by_object(TripleItem *input, PropertyID32 lef
 	}
 	memcpy(&input[left], &scratch[0], (right-left)*sizeof(TripleItem));
 }
-void Compression::merge_sort_order_by_subject(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch){
+void Compression::merge_sort_order_by_subject(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch){
 	/* base case: one element */
 	if(right == left + 1){
 		return;
 	}
-	PropertyID32 i = 0;
-	PropertyID32 length = right - left;
-	PropertyID32 midpoint_distance = length/2;
-	PropertyID32 l = left, r = left + midpoint_distance;
+	ComponentId i = 0;
+	ComponentId length = right - left;
+	ComponentId midpoint_distance = length/2;
+	ComponentId l = left, r = left + midpoint_distance;
 	merge_sort_order_by_subject(input, left, left + midpoint_distance, scratch);
 	merge_sort_order_by_subject(input, left + midpoint_distance, right, scratch);
 	for(i = 0; i < length; i++) {
@@ -888,17 +889,17 @@ void Compression::merge_sort_order_by_subject(TripleItem *input, PropertyID32 le
 	}
 	memcpy(&input[left], &scratch[0], (right-left)*sizeof(TripleItem));
 }
-void Compression::sort_by_subject(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch){
+void Compression::sort_by_subject(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch){
 
-	PropertyID32 sampleS;
-	PropertyID32 sampleP = input[left].pred;
-	for(PropertyID32 pi=left; pi<right; pi++){
+	ComponentId sampleS;
+	ComponentId sampleP = input[left].pred;
+	for(ComponentId pi=left; pi<right; pi++){
 		//cout << input[pi].pred << " ";
 		if(sampleP != input[pi].pred) {
 			sampleP = input[pi].pred;
 			merge_sort_order_by_subject(input, left, pi, scratch);
 			sampleS = input[left].sub;
-			for(PropertyID32 i=left; i<pi; i++){
+			for(ComponentId i=left; i<pi; i++){
 				if(sampleS != input[i].sub) {
 					sampleS = input[i].sub;
 					merge_sort_order_by_object(input, left, i, scratch);
@@ -909,12 +910,12 @@ void Compression::sort_by_subject(TripleItem *input, PropertyID32 left, Property
 			left = pi;
 		}
 	}
-//	for(PropertyID32 pi=left; pi<right; pi++){
+//	for(ComponentId pi=left; pi<right; pi++){
 //		cout << input[pi].pred << " ";
 //	}
 	merge_sort_order_by_subject(input, left, right, scratch);
 	sampleS = input[left].sub;
-	for(PropertyID32 i=left; i<right; i++){
+	for(ComponentId i=left; i<right; i++){
 		if(sampleS != input[i].sub) {
 			sampleS = input[i].sub;
 			merge_sort_order_by_object(input, left, i, scratch);
@@ -924,17 +925,17 @@ void Compression::sort_by_subject(TripleItem *input, PropertyID32 left, Property
 	merge_sort_order_by_object(input, left, right, scratch);
 	//cout << endl;
 }
-void Compression::sort_by_object(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch){
+void Compression::sort_by_object(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch){
 
-	PropertyID32 sampleO;
-	PropertyID32 sampleP = input[left].pred;
-	for(PropertyID32 pi=left; pi<right; pi++){
+	ComponentId sampleO;
+	ComponentId sampleP = input[left].pred;
+	for(ComponentId pi=left; pi<right; pi++){
 		//cout << input[pi].pred << " ";
 		if(sampleP != input[pi].pred) {
 			sampleP = input[pi].pred;
 			merge_sort_order_by_object(input, left, pi, scratch);
 			sampleO = input[left].obj;
-			for(PropertyID32 i=left; i<pi; i++){
+			for(ComponentId i=left; i<pi; i++){
 				if(sampleO != input[i].obj) {
 					sampleO = input[i].obj;
 					merge_sort_order_by_subject(input, left, i, scratch);
@@ -945,12 +946,12 @@ void Compression::sort_by_object(TripleItem *input, PropertyID32 left, PropertyI
 			left = pi;
 		}
 	}
-//	for(PropertyID32 pi=left; pi<right; pi++){
+//	for(ComponentId pi=left; pi<right; pi++){
 //		cout << input[pi].pred << " ";
 //	}
 	merge_sort_order_by_object(input, left, right, scratch);
 	sampleO = input[left].obj;
-	for(PropertyID32 i=left; i<right; i++){
+	for(ComponentId i=left; i<right; i++){
 		if(sampleO != input[i].obj) {
 			sampleO = input[i].obj;
 			merge_sort_order_by_subject(input, left, i, scratch);
@@ -960,11 +961,11 @@ void Compression::sort_by_object(TripleItem *input, PropertyID32 left, PropertyI
 	merge_sort_order_by_subject(input, left, right, scratch);
 	//cout << endl;
 }
-void Compression::sort_by_object(TripleItem *input, PropertyID32 left, PropertyID32 right){
+void Compression::sort_by_object(TripleItem *input, ComponentId left, ComponentId right){
 	TripleItem *scratch = (TripleItem*) malloc((right-left+1)*sizeof(TripleItem));
 	merge_sort_order_by_object(input, left, right, scratch);
-	PropertyID32 sampleO = input[left].obj;
-	for(PropertyID32 i=left; i<right; i++){
+	ComponentId sampleO = input[left].obj;
+	for(ComponentId i=left; i<right; i++){
 		if(sampleO != input[i].obj) {
 			sampleO = input[i].obj;
 			merge_sort_order_by_subject(input, left, i, scratch);
@@ -1000,7 +1001,7 @@ void Compression::addID2ObjFAW(uint32 id, bool isExtended){
 	}
 	else {
 		if(lo_page.tWord==0){               // word @flag is a S-Word
-			lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+1)*SZ_ID);
+			lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+1)*SZ_ID, (char*)"Compression::addID2ObjFAW 1");
 			lo_page.data[lo_page.numItems++] = lo_page.fWord;
 			lo_page.fWord = id;
 			increment = 1;
@@ -1009,7 +1010,7 @@ void Compression::addID2ObjFAW(uint32 id, bool isExtended){
 			lo_page.tWord++;
 		}
 		else {
-			lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+2)*SZ_ID);
+			lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+2)*SZ_ID, (char*)"Compression::addID2ObjFAW 2");
 			if(lo_page.fWordType == 2){
 				lo_page.data[lo_page.numItems++] = lo_page.fWord|0xC0000000;
 			}
@@ -1030,11 +1031,11 @@ void Compression::addID2ObjFAW(uint32 id, bool isExtended){
 void Compression::closeObjFAW(bool isExtended){
 	int increment = 1;
 	if(lo_page.tWord==0){               // word @flag is a S-Word
-		lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+1)*SZ_ID);
+		lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+1)*SZ_ID, (char*)"Compression::closeObjFAW 1");
 		lo_page.data[lo_page.numItems++] = lo_page.fWord;
 	}
 	else {
-		lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+2)*SZ_ID);
+		lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, (lo_page.numItems+2)*SZ_ID, (char*)"Compression::closeObjFAW 2");
 		if(lo_page.fWordType == 2){
 			lo_page.data[lo_page.numItems++] = lo_page.fWord|0xC0000000;
 		}

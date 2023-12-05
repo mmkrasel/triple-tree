@@ -50,7 +50,7 @@ void TripleTable::init(char* dir, bool isCreating){
 	}
 	this->buf = (TripleItem*) malloc(c.SZ_TRIPLE*BUF_ITEM_LIMIT);
 }
-void TripleTable::add(uint32 subID, uint16 predID, uint32 objID){
+void TripleTable::add(ComponentId subID, ComponentId predID, ComponentId objID){
 	this->NUM_TRIPLES++;
 	this->buf[this->BUF_INDEX].sub = subID;
 	this->buf[this->BUF_INDEX].pred = predID;

@@ -26,7 +26,7 @@ public:
 	TripleTable();
 	virtual ~TripleTable();
 	void init(char* dir, bool isCreating);
-	void add(uint32 subID, uint16 predID, uint32 objID);
+	void add(ComponentId subID, ComponentId predID, ComponentId objID);
 	unsigned long flushBuffer();
 	void load();
 	void close();

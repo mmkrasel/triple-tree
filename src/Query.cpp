@@ -112,12 +112,12 @@ void Query::load(int ps, const char* ttDirectoryPath){
 	LS_fileStream = fopen(tmp, "rb");
 	sprintf(tmp, "%s/%d_tertiary_table.tt", pathDir, ps);
 	IDX_PRDCT_fileStream = fopen(tmp, "rb");
-	fread(&PRDCT_COUNT, sizeof(PredicateId), 1, IDX_PRDCT_fileStream);
+	fread(&PRDCT_COUNT, sizeof(ComponentId), 1, IDX_PRDCT_fileStream);
 	cout << tmp << " " << PRDCT_COUNT << endl;
 	delete[] tmp;
 	ttrTable = (TertiaryTable*) malloc(sizeof(TertiaryTable)*PRDCT_COUNT);
 
-	for(PredicateId i=0; i<PRDCT_COUNT; i++){
+	for(ComponentId i=0; i<PRDCT_COUNT; i++){
 		fread(&ttrTable[i].numSubPages, sizeof(PageId), 1, IDX_PRDCT_fileStream);
 		ttrTable[i].sub_ids = (uint32*) malloc(sizeof(uint32)*ttrTable[i].numSubPages);
 		ttrTable[i].sub_page_ids = (PageId*) malloc(sizeof(PageId)*ttrTable[i].numSubPages);
@@ -136,7 +136,7 @@ void Query::load(int ps, const char* ttDirectoryPath){
 	}
 }
 void Query::clearMemory(){
-	for(int i=0; i<PRDCT_COUNT; i++){
+	for(uint32 i=0; i<PRDCT_COUNT; i++){
 		free(ttrTable[i].sub_ids);
 		free(ttrTable[i].sub_page_ids);
 		free(ttrTable[i].sub_offsets);
@@ -170,12 +170,12 @@ void Query::printResult(){
 		cout << results[i].sub << " " << results[i].pred << " " << results[i].obj << endl;
 	}
 }
-void Query::add2Result(SubObjId s, PredicateId p, SubObjId o){
+void Query::add2Result(ComponentId s, ComponentId p, ComponentId o){
 	if(resultIndex >= MAX_RESULT_SIZE){
 		//printResult();
 		//resultIndex = 0;
 		MAX_RESULT_SIZE += 2000;
-		results = (TripleItem*) c.xrealloc((void*)results, sizeof(TripleItem)*MAX_RESULT_SIZE);
+		results = (TripleItem*) c.xrealloc((void*)results, sizeof(TripleItem)*MAX_RESULT_SIZE, (char*)"Query::add2Result 1");
 	}
 	resultCount++;
 	results[resultIndex].sub = s;
@@ -193,11 +193,11 @@ void Query::loadSSPage(uint32 pid){
 	index += SZ_OFFSET16;
 	memcpy(&ss_page.run_length, &buf[index], SZ_OFFSET16);
 	index += SZ_OFFSET16;
-	ss_page.data = (uint32*)c.xrealloc((void*)ss_page.data, ss_page.numItems*SZ_ID);
-	ss_page.offsets = (Offset16*)c.xrealloc((void*)ss_page.offsets, ss_page.numItems*SZ_OFFSET16);
-	ss_page.numChildItems = (Offset16*)c.xrealloc((void*)ss_page.numChildItems, ss_page.numItems*SZ_OFFSET16);
+	ss_page.data = (uint32*)c.xrealloc((void*)ss_page.data, ss_page.numItems*SZ_ID, (char*)"Query::loadSSPage 1");
+	ss_page.offsets = (Offset16*)c.xrealloc((void*)ss_page.offsets, ss_page.numItems*SZ_OFFSET16, (char*)"Query::loadSSPage 2");
+	ss_page.numChildItems = (Offset16*)c.xrealloc((void*)ss_page.numChildItems, ss_page.numItems*SZ_OFFSET16, (char*)"Query::loadSSPage 3");
 	//SS_page.numChildItems = (PageId*)c.xrealloc((void*)SS_page.numChildItems, SS_page.numItems*SZ_PAGEID, "@loadSSPage-3");
-	ss_page.child_page_ids = (PageId*)c.xrealloc((void*)ss_page.child_page_ids, ss_page.run_length*2*SZ_PAGEID);
+	ss_page.child_page_ids = (PageId*)c.xrealloc((void*)ss_page.child_page_ids, ss_page.run_length*2*SZ_PAGEID, (char*)"Query::loadSSPage 4");
 	memcpy(ss_page.data, &buf[index], SZ_ID*ss_page.numItems);
 	index += SZ_ID*ss_page.numItems;
 	memcpy(ss_page.offsets, &buf[index], SZ_OFFSET16*ss_page.numItems);
@@ -221,11 +221,11 @@ void Query::loadSOPage(uint32 pid){
 	//	exit(1);
 	//}
 	index += SZ_OFFSET16;
-	so_page.data = (uint32*)c.xrealloc((void*)so_page.data, so_page.numItems*SZ_ID);
-	so_page.offsets = (Offset16*)c.xrealloc((void*)so_page.offsets, so_page.numItems*SZ_OFFSET16);
-	so_page.numChildItems = (Offset16*)c.xrealloc((void*)so_page.numChildItems, so_page.numItems*SZ_OFFSET16);
+	so_page.data = (uint32*)c.xrealloc((void*)so_page.data, so_page.numItems*SZ_ID, (char*)"Query::loadSOPage 1");
+	so_page.offsets = (Offset16*)c.xrealloc((void*)so_page.offsets, so_page.numItems*SZ_OFFSET16, (char*)"Query::loadSOPage 2");
+	so_page.numChildItems = (Offset16*)c.xrealloc((void*)so_page.numChildItems, so_page.numItems*SZ_OFFSET16, (char*)"Query::loadSOPage 3");
 	//SO_page.numChildItems = (PageId*)c.xrealloc((void*)SO_page.numChildItems, SO_page.numItems*SZ_PAGEID, "@loadSOPage-3");
-	so_page.child_page_ids = (PageId*)c.xrealloc((void*)so_page.child_page_ids, so_page.run_length*2*SZ_PAGEID);
+	so_page.child_page_ids = (PageId*)c.xrealloc((void*)so_page.child_page_ids, so_page.run_length*2*SZ_PAGEID, (char*)"Query::loadSOPage 4");
 	memcpy(so_page.data, &buf[index], SZ_ID*so_page.numItems);
 	index += SZ_ID*so_page.numItems;
 	memcpy(so_page.offsets, &buf[index], SZ_OFFSET16*so_page.numItems);
@@ -250,7 +250,7 @@ void Query::loadLOPage(uint32 pid){
 	index += SZ_PAGEID;
 	memcpy(&lo_page.ext_page_item_count, &buf[index], SZ_OFFSET16);
 	index += SZ_OFFSET16;
-	lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, lo_page.numItems*SZ_ID);
+	lo_page.data = (uint32*)c.xrealloc((void*)lo_page.data, lo_page.numItems*SZ_ID, (char*)"Query::loadLOPage 1");
 	memcpy(lo_page.data, &buf[index], SZ_ID*lo_page.numItems);
 	//cout << LO_page.id << " " << LO_page.numItems << " " << LO_page.ext_page_id << " " << LO_page.ext_page_item_count << endl;
 //	if(openedPages[lo_page.id]){
@@ -279,7 +279,7 @@ void Query::loadLSPage(uint32 pid){
 	index += SZ_PAGEID;
 	memcpy(&ls_page.ext_page_item_count, &buf[index], SZ_OFFSET16);
 	index += SZ_OFFSET16;
-	ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, ls_page.numItems*SZ_ID);
+	ls_page.data = (uint32*)c.xrealloc((void*)ls_page.data, ls_page.numItems*SZ_ID, (char*)"Query::loadLSPage 1");
 	memcpy(ls_page.data, &buf[index], SZ_ID*ls_page.numItems);
 //	itemCount += ls_page.numItems;
 //	//cout << LS_page.id << " " << LS_page.numItems << " " << LS_page.ext_page_id << " " << LS_page.ext_page_item_count << endl;
@@ -386,13 +386,13 @@ void Query::decodeObjFAW(uint32 fromIndex, uint32 toIndex, uint32 pred, uint32 s
 	}
 }
 void Query::getAllByPSO(){
-	for(PredicateId pi=0; pi<PRDCT_COUNT; pi++){
+	for(ComponentId pi=0; pi<PRDCT_COUNT; pi++){
 		this->getSO4P(pi+1);
 	}
 	//cout << "itemCount: " << itemCount << endl;
 }
 void Query::getAllByPOS(){
-	for(PredicateId pi=0; pi<PRDCT_COUNT; pi++){
+	for(ComponentId pi=0; pi<PRDCT_COUNT; pi++){
 		this->getSO4P(pi+1);
 	}
 	//cout << "itemCount: " << itemCount << endl;
@@ -695,27 +695,27 @@ int Query::probeInFAW(uint32* faw, uint32 fromIndex, uint32 toIndex, uint32 v){
 }
 void Query::getPO4S(uint32 s){
 	resultCount = 0;
-	for(PredicateId p=0; p<PRDCT_COUNT; p++){
+	for(ComponentId p=0; p<PRDCT_COUNT; p++){
 		getO4PS(p+1, s);
 	}
 }
 void Query::getPS4O(uint32 o){
 	resultCount = 0;
-	for(PredicateId p=0; p<PRDCT_COUNT; p++){
+	for(ComponentId p=0; p<PRDCT_COUNT; p++){
 		getS4PO(p+1, o);
 	}
 }
 void Query::getP4SO(uint32 s, uint32 o){
 	resultCount = 0;
 	//cout << "getP4SO(" << s << " " << o << ")"  << endl;
-	for(PredicateId p=0; p<PRDCT_COUNT; p++){
+	for(ComponentId p=0; p<PRDCT_COUNT; p++){
 		getPSO(p+1, s, o);
 	}
 }
 void Query::getP4OS(uint32 o, uint32 s){
 	resultCount = 0;
 	//cout << "getP4OS(" << s << " " << o << ")"  << endl;
-	for(PredicateId p=0; p<PRDCT_COUNT; p++){
+	for(ComponentId p=0; p<PRDCT_COUNT; p++){
 		getPOS(p+1, o, s);
 	}
 }
@@ -726,7 +726,7 @@ uint32* Query::FAW2OSIDs(uint32 f, uint32 t){
 		if((ls_page.data[i]&0xC0000000)==0xC0000000){
 			//cout << "Here " << endl;
 			// FR-word
-			ids = (uint32*)c.xrealloc((void*)ids, (index+1+ls_page.data[i+1])*sizeof(uint32));
+			ids = (uint32*)c.xrealloc((void*)ids, (index+1+ls_page.data[i+1])*sizeof(uint32), (char*)"Query::FAW2OSIDs 1");
 			ids[index] = ls_page.data[i]&0x3fffffff;
 			uint32 k = ids[index++];
 			k++;
@@ -741,20 +741,20 @@ uint32* Query::FAW2OSIDs(uint32 f, uint32 t){
 			//cout << "Here " << OS_page.data[i] << " " << OS_page.data[i+1] << endl;
 
 			// FM-word
-			ids = (uint32*)c.xrealloc((void*)ids, (index+1)*sizeof(uint32));
+			ids = (uint32*)c.xrealloc((void*)ids, (index+1)*sizeof(uint32), (char*)"Query::FAW2OSIDs 2");
 			ids[index] = ls_page.data[i]&0x3fffffff;
 			uint32 k = ids[index++];
 			k++;
 			i++;
 		    for(int j=0; j<32; j++){
 		    	if(ls_page.data[i]&BITS[j]){
-		    		ids = (uint32*)c.xrealloc((void*)ids, (index+1)*sizeof(uint32));
+		    		ids = (uint32*)c.xrealloc((void*)ids, (index+1)*sizeof(uint32), (char*)"Query::FAW2OSIDs 3");
 		    		ids[index++] = k+j;
 		    	}
 		    }
 		}
 		else {
-			ids = (uint32*)c.xrealloc((void*)ids, (index+1)*sizeof(uint32));
+			ids = (uint32*)c.xrealloc((void*)ids, (index+1)*sizeof(uint32), (char*)"Query::FAW2OSIDs 4");
 			ids[index++] = ls_page.data[i];
 			//cout << "Here " << OS_page.data[i] << endl;
 		}

@@ -20,9 +20,10 @@ namespace fs = boost::filesystem;
 
 using namespace std;
 
+bool Common::LOG = false;
 Common::Common() {
 	// TODO Auto-generated constructor stub
-	URI_MAX_LENGTH = 512;
+	URI_MAX_LENGTH = 2482800;
 	SZ_TRIPLE = sizeof(TripleItem);
 	SZ_TRIPLE_ID = sizeof(TripleId);
 }
@@ -31,9 +32,12 @@ Common::~Common() {
 	// TODO Auto-generated destructor stub
 }
 
-void* Common::xrealloc(void *ptr, unsigned long size){
+void* Common::xrealloc(void *ptr, long size, char* calledFrom){
+	if(size <= 0){
+		printf("@xrealloc: %ld: %s\n", size, calledFrom);
+		exit(1);
+	}
 	void *value = realloc(ptr, size);
-    // printf("@xrealloc: %ld %ld %d: %s\n", ptr, value, size, calledFrom);
     if (value == 0 && size>0){
         value = realloc(ptr, size);
         if(value == 0){

@@ -16,12 +16,12 @@ typedef unsigned short Offset16;
 
 typedef struct Tertiary_Table{
 	PageId numSubPages;				// number of secondary-subject-pages that contain the children
-	SubObjId* sub_ids;				// contains the id of the first child subject
+	ComponentId* sub_ids;				// contains the id of the first child subject
     PageId* sub_page_ids;			// contains the page-id of the first child subject
     Offset16* sub_offsets;
     //
     PageId numObjPages;				// number of secondary-object-pages that contain the children
-    SubObjId* obj_ids;				// contains the id of the first child object
+    ComponentId* obj_ids;				// contains the id of the first child object
     PageId* obj_page_ids;			// contains the page-id of the first child object
     Offset16* obj_offsets;
 }TertiaryTable;
@@ -30,7 +30,7 @@ typedef struct Secondary_Page{
 	PageId id;						// Page Id
 	Offset16 emptySpace;			// available emptSpace in the page
 	Offset16 numItems;				// total number of items in FAW-encoded data. Use it to know the number of encoded items for last parent
-	SubObjId* data;					// stores subject or object ids
+	ComponentId* data;					// stores subject or object ids
     Offset16* offsets;				// offsets of FAW-encoded child-data in leaf page
     Offset16* numChildItems;		// number of items in FAW-encoded child-data in leaf page
     PageId* child_page_ids;			// run-length encoded child page ids
@@ -43,12 +43,12 @@ typedef struct Leaf_Page{
 	PageId id;						// page id
 	Offset16 emptySpace;			// available emptSpace in the page
 	Offset16 numItems;				// total number of items in FAW-encoded data. Use it to know the number of encoded items for last parent
-	SubObjId* data;					// FAW encoded data. There may several group of FAW encoded items
+	ComponentId* data;					// FAW encoded data. There may several group of FAW encoded items
     PageId ext_page_id;				// extended page id if the child of last parents are also in next page
     Offset16 ext_page_item_count;	// number of items in this current extended page ()
-    SubObjId fWord;
-    SubObjId fWordType;
-    SubObjId tWord;
+    ComponentId fWord;
+    ComponentId fWordType;
+    ComponentId tWord;
 }LeafPage;
 
 #pragma pack(pop)
@@ -101,13 +101,13 @@ public:
 	void flush_ls_page();
 	bool store_ls_page();
 	void store_last_pages();
-	PropertyID32 min_id(PropertyID32 x, PropertyID32 y);
-	void merge_sort_order_by_predicate(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch);
-	void merge_sort_order_by_object(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch);
-	void merge_sort_order_by_subject(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch);
-	void sort_by_subject(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch);
-	void sort_by_object(TripleItem *input, PropertyID32 left, PropertyID32 right, TripleItem *scratch);
-	void sort_by_object(TripleItem *input, PropertyID32 left, PropertyID32 right);
+	ComponentId min_id(ComponentId x, ComponentId y);
+	void merge_sort_order_by_predicate(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch);
+	void merge_sort_order_by_object(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch);
+	void merge_sort_order_by_subject(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch);
+	void sort_by_subject(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch);
+	void sort_by_object(TripleItem *input, ComponentId left, ComponentId right, TripleItem *scratch);
+	void sort_by_object(TripleItem *input, ComponentId left, ComponentId right);
 	void addObjectID2FAW(uint32 id, bool isClosed, int calledFrom, uint32 i, uint32 sub);
 
 	void addID2ObjFAW(uint32 id, bool isExtended);

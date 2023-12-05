@@ -43,7 +43,7 @@ public:
 	//
 	char* filePath;
 	long size = 0;
-	HashMap16 hashMap;
+	HashMap16 hashMap16;
 	Index16* indices = NULL;
 	uint16 LAST_UNIQ_ID;
 	Common c;
