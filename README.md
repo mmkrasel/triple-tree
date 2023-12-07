@@ -1,6 +1,14 @@
 # Triple Tree
 A technique to compress RDF triples and query on compressed RDF triples data
 
+**# Dependencies**
+
+	Packages: (Install boost and rapidjson library and keep it in the path of /usr/include/)
+ 		libboost-all-dev version 1.71.0
+   		rapidjson-dev=1.1.0
+	Compiler: g++ 
+	Note: User **build.sh** to compile and build
+
 **#Create dictionary from triple datatsets**
 
 	./TT -d path_to_source_NT_dataset_file path_to_triple_tree_directory
