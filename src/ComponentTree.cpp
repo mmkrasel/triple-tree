@@ -31,7 +31,7 @@ void ComponentTree::init(char* dir, char* type){
 		pathH.init(dir, (char*)"p_path");
 		refH.init(dir, (char*)"p_ref");
 		proOwnH.init(dir, (char*)"p_owner");
-		lH.init(dir, (char*)"p_ltrl");
+		//lH.init(dir, (char*)"p_ltrl");
 	}else {
 		pathH.init(dir, (char*)"so_path");
 		refH.init(dir, (char*)"so_ref");
@@ -117,17 +117,35 @@ ComponentId ComponentTree::add2ComponentTree(RefId refId, PathId pathId, ProOwnI
     }
 	return tree.childs[ri].childs[pai].cids[poi];
 }
+
+
+
+
+
+
+
+
+
+
+
+
 ComponentId ComponentTree::encodeUri(const char* uri) {
 //	if(Common::getLog()){
-//		cout << "@ComponentTree::encodeUri" << endl;
+		// cout << "@ComponentTree::encodeUri" << endl;
 //	}
+	string s = uri;
+	boost::algorithm::trim_right(s);
+	boost::algorithm::trim_left(s);
 	try {
-		if(boost::regex_match(uri, what, ex)) {
+		if(boost::regex_match(s.c_str(), what, ex)) {
 			string p1, p2, p3;
 			//string protocol = string(what[1].first, what[1].second);
 			p1 = string(what[1].first, what[3].second);
 			p2 = string(what[4].first, what[5].second);
 			p3 = string(what[6].first, what[6].second);
+
+			// cout << "2 @getSubObjId: " << p1 << " " << p2 << " " << p3 <<endl;
+
 			uint32 ownID = 0;
 //			if(Common::getLog()){
 //				cout << "@ComponentTree::encodeUri 1" << endl;
@@ -149,7 +167,9 @@ ComponentId ComponentTree::encodeUri(const char* uri) {
 			if(p3.length()>0){
 				refID = refH.add(p3.c_str());
 			}
-			return add2ComponentTree(refID, pathID, ownID);
+			uint32 id = add2ComponentTree(refID, pathID, ownID);
+			// cout << "@encodeUri (in): **" << s.c_str() << "**" << refID << " " << pathID << " " << ownID << " " << id <<endl;
+			return id;
 		}
 	}catch(out_of_range & e){}
      catch(runtime_error & e ){}
@@ -157,11 +177,39 @@ ComponentId ComponentTree::encodeUri(const char* uri) {
 // 	if(Common::getLog()){
 // 		cout << "@ComponentTree::encodeUri 4" << endl;
 // 	}
-    return add2ComponentTree(0, 0, lH.add(uri));
+	uint32 id = add2ComponentTree(0, 0, lH.add(uri));
+	// cout << "@encodeUri (out): **" << uri << " " << id <<endl;
+    return id;
 }
 ComponentId ComponentTree::encodeLiteral(const char* literal) {
-    return add2ComponentTree(0, 0, lH.add(literal));
+
+	string s = literal;
+	boost::algorithm::trim_right(s);
+	boost::algorithm::trim_left(s);
+	if (literal[0]=='"' && literal[1]=='<') {
+		s.erase(remove(s.begin(), s.end(), '"'), s.end());
+		boost::algorithm::trim_right(s);
+		ComponentId id = encodeUri(s.c_str());
+		//cout << "@encodeLiteral (in): **" << s.c_str() << "**" << id <<endl;
+		return id;
+		// uri = s.c_str();
+	}
+	uint32 id = lH.add(s.c_str());
+	// cout << "@encodeLiteral(out): ***" << s.c_str() << "***" << id << endl;
+    return add2ComponentTree(0, 0, id);
 }
+
+
+
+
+
+
+
+
+
+
+
+
 ComponentId ComponentTree::getIdFromComponentTree(RefId refId, PathId pathId, ProOwnId proOwnId){
 	if((proOwnId|pathId|refId)==0){
 		return 0;
@@ -182,15 +230,25 @@ ComponentId ComponentTree::getIdFromComponentTree(RefId refId, PathId pathId, Pr
 	return tree.childs[ri].childs[pai].cids[poi];
 }
 ComponentId ComponentTree::getComponentId(char* uri){
-	string p1, p2, p3;
-	//cout << endl << endl << "@getSubObjId: " << uri << endl;
+	
+	string s = uri;
+	if (s.rfind("http://", 0) == 0 || s.rfind("https://", 0) == 0 || s.rfind("ftp://", 0) == 0 || s.rfind("file://", 0) == 0) {
+		s = "<" + s + ">";
+		//cout << s << endl;
+		// uri = s.c_str();
+	}
+	//cout << endl << endl << "1 @getSubObjId: " << uri << endl;
 	try {
-		if(boost::regex_match(uri, what, ex)) {
-			string protocol = string(what[1].first, what[1].second);
+		if(boost::regex_match(s.c_str(), what, ex)) {
+			string p1, p2, p3;
+			//string protocol = string(what[1].first, what[1].second);
+			//cout << "2.1 @getSubObjId: " << "" <<endl;
 			p1 = string(what[1].first, what[3].second);
+			//cout << "2.2 @getSubObjId: " << p1 <<endl;
 			p2 = string(what[4].first, what[5].second);
+			//cout << "2.3 @getSubObjId: " << p2 << " " << p3 <<endl;
 			p3 = string(what[6].first, what[6].second);
-			//cout << "@getSubObjId: " << p1 << " " << p2 << " " << p3 <<endl;
+			//cout << "2 @getSubObjId: " << p3 <<endl;
 			ProOwnId ownID = 0;
 			if(p1.length()>0){
 				ownID = proOwnH.getId(p1.c_str());
@@ -203,11 +261,13 @@ ComponentId ComponentTree::getComponentId(char* uri){
 			if(p3.length()>0){
 				refID = refH.getId(p3.c_str());
 			}
-			//cout << "@getSubObjId: " << ownID << " " << pathID << " " << refID <<endl;
-			return getIdFromComponentTree(refID, pathID, ownID);
+			ComponentId id = getIdFromComponentTree(refID, pathID, ownID);
+			// cout << "3 @getSubObjId: " << ownID << " " << pathID << " " << refID << " " << id << endl;
+			return id;
 		}
-	}catch(out_of_range & e){}
-	 catch(runtime_error & e ){}
+	}catch(out_of_range & e){ cerr << e.what() << endl; }  
+	 catch(runtime_error & e ){ cerr << e.what() << endl; }
+
 	 return getIdFromComponentTree(0, 0, lH.getId(uri));
 }
 char* ComponentTree::getComponent(ComponentId uid){
@@ -223,7 +283,7 @@ char* ComponentTree::getComponent(ComponentId uid){
     PathId pathID = tree.childs[ri].ids[pai];
     ProOwnId ownerID = tree.childs[ri].childs[pai].ids[poi];
 
-    //cout << "@getSubObj: " << uid << " " << ownerID << " " << pathID << " " << refID << endl;
+    // cout << "\n@ComponentTree::getComponent: " << uid << " " << ownerID << " " << pathID << " " << refID << endl;
 
     if(refID == 0 && pathID == 0){
 		return lH.getValue(ownerID);
@@ -249,7 +309,7 @@ char* ComponentTree::getComponent(ComponentId uid){
 		len += l;
     }
     uri[len] = '\0';
-    //cout << "@getSubObj: " << uid << " " << proOwnH.getValue(ownerID) << " " << pathH.getValue(pathID) << " " << refH.getValue(refID) << endl;
+    // cout << "@getSubObj: " << uid << " " << proOwnH.getValue(ownerID) << " " << pathH.getValue(pathID) << " " << refH.getValue(refID) << endl;
     return uri;
 }
 
@@ -293,11 +353,15 @@ unsigned long ComponentTree::flush(char* pathDir, char* type){
 	return dicSize;
 }
 void ComponentTree::open(char* datasetPath, char* type){
+
+
+	//printf("%s %s\n", datasetPath, type);
+
 	if(type[0]=='p'){
 		pathH.load(datasetPath, (char*)"p_path");
 		refH.load(datasetPath, (char*)"p_ref");
 		proOwnH.load(datasetPath, (char*)"p_owner");
-		lH.load(datasetPath, (char*)"p_ltrl");
+		//lH.load(datasetPath, (char*)"p_ltrl");
 	}else{
 		pathH.load(datasetPath, (char*)"so_path");
 		refH.load(datasetPath, (char*)"so_ref");
@@ -308,6 +372,11 @@ void ComponentTree::open(char* datasetPath, char* type){
 	ComponentId ti;
     char* tmp = (char*)malloc(180);
 	sprintf(tmp, "%s/dic_%s_tree.tt", datasetPath, type);
+
+
+	//printf("%s\n", tmp);
+
+
 	FILE* fileStream = fopen(tmp, "r");
 	free(tmp);
 	fread(&COMPONENT_COUNT, common.SZ_COMPONENT_ID, 1, fileStream);

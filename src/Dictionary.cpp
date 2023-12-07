@@ -295,6 +295,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 			    if (uri_matched == 0) {
 			    	objId = so.encodeUri(properties[uriCount]);
 			    	tripleCount++;
+			    	//printf("@Dictionary::create 1 *** %d %d %d\n", subId, predId, objId);
 			    	tripleTable.add(subId, predId, objId);
 					uriCount = 0;
 					index = 0;
@@ -307,6 +308,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 				    int literal_matched = regexec(&literal_regex, properties[uriCount], 2, matches, 0);
 			    	if (literal_matched == 0) {
 						objId = so.encodeLiteral(properties[uriCount]);
+						//printf("@Dictionary::create 2 *** %d %d %d\n", subId, predId, objId);
 						tripleTable.add(subId, predId, objId);
 			    		tripleCount++;
 						uriCount = 0;
@@ -320,6 +322,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 						literal_matched = regexec(&literal_regex_type, properties[uriCount], 2, matches, 0);
 						if (literal_matched == 0) {
 							objId = so.encodeLiteral(properties[uriCount]);
+							//printf("@Dictionary::create 3 *** %d %d %d\n", subId, predId, objId);
 							tripleTable.add(subId, predId, objId);
 							tripleCount++;
 							uriCount = 0;
@@ -332,6 +335,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 						}
 						else if (properties[uriCount][index-3] == '@') {
 							objId = so.encodeLiteral(properties[uriCount]);
+							//printf("@Dictionary::create 4 *** %d %d %d\n", subId, predId, objId);
 							tripleTable.add(subId, predId, objId);
 							tripleCount++;
 							uriCount = 0;
@@ -356,6 +360,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 					    	    properties[uriCount][index+2] = '\0';
 					    	}
 							objId = so.encodeLiteral(properties[uriCount]);
+							//printf("@Dictionary::create 5 *** %d %d %d\n", subId, predId, objId);
 							tripleTable.add(subId, predId, objId);
 							tripleCount++;
 							uriCount = 0;
@@ -380,6 +385,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 					    	    properties[uriCount][index] = '\0';
 					    	}
 							objId = so.encodeLiteral(properties[uriCount]);
+							//printf("@Dictionary::create 6 *** %d %d %d\n", subId, predId, objId);
 							tripleTable.add(subId, predId, objId);
 							tripleCount++;
 							uriCount = 0;
@@ -403,6 +409,7 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
 			} else if(index>5 && properties[uriCount][index-1]=='.' && properties[uriCount][index-2]==' ' && ((properties[uriCount][index-3]=='@' && properties[uriCount][index-4]=='"')||(properties[uriCount][index-5]=='@' && properties[uriCount][index-6]=='"'))){
 				properties[uriCount][index-2] = '\0';
 				objId = so.encodeLiteral(properties[uriCount]);
+				//printf("@Dictionary::create 7 *** %d %d %d\n", subId, predId, objId);
 				tripleTable.add(subId, predId, objId);
 				tripleCount++;
 				uriCount = 0;
@@ -426,12 +433,10 @@ void Dictionary::create(char* inputPath, char* outputDirectory) {
     regfree(&literal_regex);
     regfree(&literal_regex_type);
     //exit(1);
-
 	cout << "#Lines: " << linesCount;
 	cout << "; #Triples: " << tripleCount;
 	cout << "; Elapsed Time: " << common.getElapsedTime() << endl;
 }
-
 void Dictionary::flushDictionary(){
 	unsigned long dicSize = so.flush(pathDir, (char*)"so");
 	dicSize += p.flush(pathDir, (char*)"p");
@@ -456,6 +461,7 @@ void Dictionary::close(){
 	delete[] uri;
 }
 ComponentId Dictionary::getSubObjId(char* uri){
+	//cout << uri << endl;
 	return so.getComponentId(uri);
 }
 ComponentId Dictionary::getPredicateId(char* uri){

@@ -113,7 +113,7 @@ void Query::load(int ps, const char* ttDirectoryPath){
 	sprintf(tmp, "%s/%d_tertiary_table.tt", pathDir, ps);
 	IDX_PRDCT_fileStream = fopen(tmp, "rb");
 	fread(&PRDCT_COUNT, sizeof(ComponentId), 1, IDX_PRDCT_fileStream);
-	cout << tmp << " " << PRDCT_COUNT << endl;
+	// cout << tmp << " " << PRDCT_COUNT << endl;
 	delete[] tmp;
 	ttrTable = (TertiaryTable*) malloc(sizeof(TertiaryTable)*PRDCT_COUNT);
 

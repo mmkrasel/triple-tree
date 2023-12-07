@@ -141,16 +141,16 @@ void Compression::updateIndexTable(bool addNew, uint32 startId){
 	}
 }
 void Compression::start(int ps, const char* datasetPath){
-	cout << "@Compression::start:Page Size: " << ps << endl;
+	//cout << "@Compression::start:Page Size: " << ps << endl;
 	this->initCompression(ps, datasetPath);
 	int strLen = strlen(datasetPath);
 	char* path = new char[strLen+32];
 	sprintf(path, "%s/triple_table.tt", datasetPath);
-	cout << "@Compression::start:Reading dataset: " << path << endl;
+	//cout << "@Compression::start:Reading dataset: " << path << endl;
 	long tripleTableSize = c.getFileSize(path);
-	uint32 numTriplesInDB = tripleTableSize / 10;
+	uint32 numTriplesInDB = tripleTableSize / sizeof(TripleItem);
 	cout << "@Compression::start:#triples: " << numTriplesInDB << endl;
-	cout << "@Compression::start:Reading triple table...." << endl;
+	//cout << "@Compression::start:Reading triple table...." << endl;
 	TripleItem* ts  = (TripleItem*) malloc(numTriplesInDB*sizeof(TripleItem));
 	FILE* fStream = fopen(path, "rb");
 	fread(ts, sizeof(TripleItem), numTriplesInDB, fStream);
@@ -163,7 +163,7 @@ void Compression::start(int ps, const char* datasetPath){
 	//}
 	cout << "@Compression::start:Sorting by predicate ids...." << endl;
 	TripleItem *scratch = (TripleItem*) malloc(numTriplesInDB*sizeof(TripleItem));
-//	exit(1);
+	//	exit(1);
 	this->merge_sort_order_by_predicate(ts, 0, numTriplesInDB, scratch);
 	//for(uint32 i=0; i<numTriplesInDB; i++){
 	//	if(ts[i].sub==510){
@@ -184,87 +184,87 @@ void Compression::start(int ps, const char* datasetPath){
 	scratch = NULL;
 	cout << "@Compression::start:compressing for p->o->s paths..." << endl;
 	this->object_order_compression(ts, numTriplesInDB);
-//	for(uint32 i=1; i<numTriplesInDB; i++){
-//		if(ts[i].obj==0 || ts[i].obj==ts[i].sub || ts[i-1].obj==ts[i].obj){
-//			cout << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << endl;
-//			break;
-//		}
-//	}
-//	exit(1);
-//    PRDCT_COUNT = 0;
-//    ttrTable[PRDCT_COUNT].numSubPages = 0;
-//    ttrTable[PRDCT_COUNT].sub_ids = (uint32*) malloc(SZ_ID);
-//    ttrTable[PRDCT_COUNT].sub_page_ids = (PageId*) malloc(SZ_PAGEID);
-//    ttrTable[PRDCT_COUNT].sub_offsets = (Offset16*) malloc(SZ_OFFSET16);
-//    ttrTable[PRDCT_COUNT].sub_ids[0] = ts[0].sub;
-//    ttrTable[PRDCT_COUNT].sub_page_ids[0] = SS_PAGE_ID;
-//    ttrTable[PRDCT_COUNT].sub_offsets[0] = SS_page.numItems;
-////    IDX_prdct[PRDCT_COUNT].numObjPages = 0;
-////    IDX_prdct[PRDCT_COUNT].obj_ids = (uint32*) malloc(SZ_ID);
-////    IDX_prdct[PRDCT_COUNT].obj_page_ids = (PageId*) malloc(SZ_PAGEID);
-////    //IDX_prdct[PRDCT_COUNT].obj_offsets = (Offset16*) malloc(SZ_OFFSET16);
-////    IDX_prdct[PRDCT_COUNT].obj_page_ids[0] = SO_PAGE_ID;
-////    //IDX_prdct[PRDCT_COUNT].obj_offsets[0] = SS_page.numItems;
-//
-//    ComponentId sampleP = 0, sampleS = 0;
-//    uint32 left = 0;
-//    uint32 size = 0;
-//    bool isExtended =  false;
-//    sampleP = ts[0].pred;
-//    sampleS = -1;
-//	for(uint32 i=0; i<numTriplesInDB; i++){
-//		//cout << i << ". " << ts[i].pred << " " << ts[i].sub << " " << ts[i].obj << endl;
-//		if(sampleP != ts[i].pred) {
-//			//cout << left << " " << i << " " << PRDCT_COUNT << endl;
-//
-//			compress_for_objects(ts, left, i);
-//
-//			this->updateIndexTable(true, ts[i].sub);
-//			sampleP = ts[i].pred;
-//			sampleS = -1;
-//			left = i;
-//		}
-//		// for subject
-//		if(sampleS != ts[i].sub){
-//			sampleS = ts[i].sub;
-//			size = COMMON_SIZE_OF_SECONDARY_PAGE + (SZ_ID+SZ_OFFSET16*2)*(SS_page.numItems+1) + SZ_PAGEID*SS_page.run_length*2;
-//			if(size >= PAGE_LIMIT){
-//				store_ss_page(ts[i].sub);
-//			}
-//			SS_page.numItems++;
-//			SS_page.data = (uint32*)c.xrealloc((void*)SS_page.data, SS_page.numItems*SZ_ID, "@start-1");
-//			SS_page.offsets = (Offset16*)c.xrealloc((void*)SS_page.offsets, SS_page.numItems*SZ_OFFSET16, "@start-2");
-//			SS_page.numChildItems = (Offset16*)c.xrealloc((void*)SS_page.numChildItems, SS_page.numItems*SZ_OFFSET16, "@start-2");
-//			SS_page.data[SS_page.numItems-1] = ts[i].sub;
-//			SS_page.offsets[SS_page.numItems-1] = LO_page.numItems;
-//			SS_page.numChildItems[SS_page.numItems-1] = 0;
-//			//cout << PS_page.numItems-1 << " " << ts[i].sub << endl;
-//			// run-length encoding on page-ids
-//			if(SS_page.child_page_ids[SS_page.run_length*2+1] == num_LO_pages){
-//				SS_page.child_page_ids[SS_page.run_length*2]++;
-//			} else {
-//				SS_page.run_length++;
-//				SS_page.child_page_ids = (PageId*)c.xrealloc((void*)SS_page.child_page_ids, (SS_page.run_length+1)*2*SZ_PAGEID, "@start-3");
-//				SS_page.child_page_ids[SS_page.run_length*2] = 1;
-//				SS_page.child_page_ids[SS_page.run_length*2+1] = num_LO_pages;
-//			}
-//			isExtended =  false;
-//		}
-//		size = COMMON_SIZE_OF_LEAF_PAGE + SZ_ID*(LO_page.numItems+2);
-//		if(size >= PAGE_LIMIT){
-//			isExtended =  store_lo_page();
-//		}
-//		if(isExtended){
-//			LO_page.ext_page_item_count++;
-//		}
-//		// update code here to perform FAW encoding
-//		LO_page.numItems++;
-//		LO_page.data = (uint32*)c.xrealloc((void*)LO_page.data, LO_page.numItems*SZ_ID, "@start-5");
-//		LO_page.data[LO_page.numItems-1] = ts[i].obj;
-//		SS_page.numChildItems[SS_page.numItems-1]++;
-//		//cout << i << endl;
-//	}
-//	compress_for_objects(ts, left, numTriplesInDB);
+	//	for(uint32 i=1; i<numTriplesInDB; i++){
+	//		if(ts[i].obj==0 || ts[i].obj==ts[i].sub || ts[i-1].obj==ts[i].obj){
+	//			cout << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << endl;
+	//			break;
+	//		}
+	//	}
+	//	exit(1);
+	//    PRDCT_COUNT = 0;
+	//    ttrTable[PRDCT_COUNT].numSubPages = 0;
+	//    ttrTable[PRDCT_COUNT].sub_ids = (uint32*) malloc(SZ_ID);
+	//    ttrTable[PRDCT_COUNT].sub_page_ids = (PageId*) malloc(SZ_PAGEID);
+	//    ttrTable[PRDCT_COUNT].sub_offsets = (Offset16*) malloc(SZ_OFFSET16);
+	//    ttrTable[PRDCT_COUNT].sub_ids[0] = ts[0].sub;
+	//    ttrTable[PRDCT_COUNT].sub_page_ids[0] = SS_PAGE_ID;
+	//    ttrTable[PRDCT_COUNT].sub_offsets[0] = SS_page.numItems;
+	////    IDX_prdct[PRDCT_COUNT].numObjPages = 0;
+	////    IDX_prdct[PRDCT_COUNT].obj_ids = (uint32*) malloc(SZ_ID);
+	////    IDX_prdct[PRDCT_COUNT].obj_page_ids = (PageId*) malloc(SZ_PAGEID);
+	////    //IDX_prdct[PRDCT_COUNT].obj_offsets = (Offset16*) malloc(SZ_OFFSET16);
+	////    IDX_prdct[PRDCT_COUNT].obj_page_ids[0] = SO_PAGE_ID;
+	////    //IDX_prdct[PRDCT_COUNT].obj_offsets[0] = SS_page.numItems;
+	//
+	//    ComponentId sampleP = 0, sampleS = 0;
+	//    uint32 left = 0;
+	//    uint32 size = 0;
+	//    bool isExtended =  false;
+	//    sampleP = ts[0].pred;
+	//    sampleS = -1;
+	//	for(uint32 i=0; i<numTriplesInDB; i++){
+	//		//cout << i << ". " << ts[i].pred << " " << ts[i].sub << " " << ts[i].obj << endl;
+	//		if(sampleP != ts[i].pred) {
+	//			//cout << left << " " << i << " " << PRDCT_COUNT << endl;
+	//
+	//			compress_for_objects(ts, left, i);
+	//
+	//			this->updateIndexTable(true, ts[i].sub);
+	//			sampleP = ts[i].pred;
+	//			sampleS = -1;
+	//			left = i;
+	//		}
+	//		// for subject
+	//		if(sampleS != ts[i].sub){
+	//			sampleS = ts[i].sub;
+	//			size = COMMON_SIZE_OF_SECONDARY_PAGE + (SZ_ID+SZ_OFFSET16*2)*(SS_page.numItems+1) + SZ_PAGEID*SS_page.run_length*2;
+	//			if(size >= PAGE_LIMIT){
+	//				store_ss_page(ts[i].sub);
+	//			}
+	//			SS_page.numItems++;
+	//			SS_page.data = (uint32*)c.xrealloc((void*)SS_page.data, SS_page.numItems*SZ_ID, "@start-1");
+	//			SS_page.offsets = (Offset16*)c.xrealloc((void*)SS_page.offsets, SS_page.numItems*SZ_OFFSET16, "@start-2");
+	//			SS_page.numChildItems = (Offset16*)c.xrealloc((void*)SS_page.numChildItems, SS_page.numItems*SZ_OFFSET16, "@start-2");
+	//			SS_page.data[SS_page.numItems-1] = ts[i].sub;
+	//			SS_page.offsets[SS_page.numItems-1] = LO_page.numItems;
+	//			SS_page.numChildItems[SS_page.numItems-1] = 0;
+	//			//cout << PS_page.numItems-1 << " " << ts[i].sub << endl;
+	//			// run-length encoding on page-ids
+	//			if(SS_page.child_page_ids[SS_page.run_length*2+1] == num_LO_pages){
+	//				SS_page.child_page_ids[SS_page.run_length*2]++;
+	//			} else {
+	//				SS_page.run_length++;
+	//				SS_page.child_page_ids = (PageId*)c.xrealloc((void*)SS_page.child_page_ids, (SS_page.run_length+1)*2*SZ_PAGEID, "@start-3");
+	//				SS_page.child_page_ids[SS_page.run_length*2] = 1;
+	//				SS_page.child_page_ids[SS_page.run_length*2+1] = num_LO_pages;
+	//			}
+	//			isExtended =  false;
+	//		}
+	//		size = COMMON_SIZE_OF_LEAF_PAGE + SZ_ID*(LO_page.numItems+2);
+	//		if(size >= PAGE_LIMIT){
+	//			isExtended =  store_lo_page();
+	//		}
+	//		if(isExtended){
+	//			LO_page.ext_page_item_count++;
+	//		}
+	//		// update code here to perform FAW encoding
+	//		LO_page.numItems++;
+	//		LO_page.data = (uint32*)c.xrealloc((void*)LO_page.data, LO_page.numItems*SZ_ID, "@start-5");
+	//		LO_page.data[LO_page.numItems-1] = ts[i].obj;
+	//		SS_page.numChildItems[SS_page.numItems-1]++;
+	//		//cout << i << endl;
+	//	}
+	//	compress_for_objects(ts, left, numTriplesInDB);
 	store_last_pages();
 	free(ts);
 	PRDCT_COUNT++;
@@ -284,7 +284,7 @@ void Compression::start(int ps, const char* datasetPath){
 	fflush(IDX_PRDCT_fileStream);
 	fclose(IDX_PRDCT_fileStream);
 	cout << "\n\n@Compression::start:Compression completed\n\n" << endl;
-	this->compressionFactor(ps);
+	//this->compressionFactor(ps);
 }
 void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInDB){
     PRDCT_COUNT = 0;
@@ -409,7 +409,7 @@ void Compression::subject_order_compression(TripleItem *ts, uint32 numTriplesInD
 		lo_page.ext_page_item_count = lo_page.numItems;
 	}
 	this->closeObjFAW(isExtended);
-	cout << "Compression::subject_order_compression: #Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
+	// cout << "Compression::subject_order_compression: #Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
 }
 void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB){
 	SO_PAGE_ID = 0;
@@ -440,10 +440,10 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 		sub=ts[i].sub; pred=ts[i].pred; obj=ts[i].obj;
 		//cout << i << ". " << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << endl;
 		//cout << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << endl;
-//		if(PRDCT_COUNT==0 && ts[i].obj==5){
-//			//cout << ts[i].sub << endl;
-//			cout << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << endl;
-//		}
+	//		if(PRDCT_COUNT==0 && ts[i].obj==5){
+	//			//cout << ts[i].sub << endl;
+	//			cout << ts[i].sub << " " << ts[i].pred << " " << ts[i].obj << endl;
+	//		}
 		if(sampleP != ts[i].pred) {
 			if(i > left && !isClosed){
 				this->closeSubFAW(isExtended);
@@ -463,9 +463,9 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 				this->closeSubFAW(isExtended);
 				isClosed = true;
 			}
-//			if(PRDCT_COUNT==0 && i>0 && ts[i-1].obj==5){
-//				cout << endl << ts[i-1].obj << " " << ci << " " << so_page.numChildItems[so_page.numItems-1] << " " << so_page.numItems << endl; ci = 0;
-//			}
+	//			if(PRDCT_COUNT==0 && i>0 && ts[i-1].obj==5){
+	//				cout << endl << ts[i-1].obj << " " << ci << " " << so_page.numChildItems[so_page.numItems-1] << " " << so_page.numItems << endl; ci = 0;
+	//			}
 			sampleO = ts[i].obj;
 			size = COMMON_SIZE_OF_SECONDARY_PAGE + (SZ_ID+SZ_OFFSET16*2)*(so_page.numItems+1) + SZ_PAGEID*so_page.run_length*2;
 			if(size >= PAGE_LIMIT){
@@ -538,7 +538,7 @@ void Compression::object_order_compression(TripleItem *ts, uint32 numTriplesInDB
 	//}
 	//cout << PRDCT_COUNT << " " << ci << endl;
 	//cout << nc << " " << ec << endl;
-	cout << "@Compression::object_order_compression:#Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
+	// cout << "@Compression::object_order_compression:#Duplicates: " << dupCount << "; #Distinct: " << numTriplesInDB-dupCount << endl;
 }
 void Compression::addID2SubFAW(uint32 id, bool isExtended){
 	long dif;
@@ -667,10 +667,10 @@ bool Compression::store_lo_page(){
 		isExtended = true;
 		lo_page.ext_page_id = (LO_PAGE_ID+1);	// the page has an extended page having id (num_LO_pages+1)
 		this->flush_lo_page();
-//		SS_page.run_length++;
-//		SS_page.child_page_ids = (PageId*)c.xrealloc((void*)SS_page.child_page_ids, (SS_page.run_length+1)*2*SZ_PAGEID, "@store_lo_page-1");
-//		SS_page.child_page_ids[SS_page.run_length*2] = 1;
-//		SS_page.child_page_ids[SS_page.run_length*2+1] = (LO_PAGE_ID+1);
+	//		SS_page.run_length++;
+	//		SS_page.child_page_ids = (PageId*)c.xrealloc((void*)SS_page.child_page_ids, (SS_page.run_length+1)*2*SZ_PAGEID, "@store_lo_page-1");
+	//		SS_page.child_page_ids[SS_page.run_length*2] = 1;
+	//		SS_page.child_page_ids[SS_page.run_length*2+1] = (LO_PAGE_ID+1);
 	}
 	LO_PAGE_ID++;
 	lo_page.numItems = 0;
@@ -910,9 +910,9 @@ void Compression::sort_by_subject(TripleItem *input, ComponentId left, Component
 			left = pi;
 		}
 	}
-//	for(ComponentId pi=left; pi<right; pi++){
-//		cout << input[pi].pred << " ";
-//	}
+	//	for(ComponentId pi=left; pi<right; pi++){
+	//		cout << input[pi].pred << " ";
+	//	}
 	merge_sort_order_by_subject(input, left, right, scratch);
 	sampleS = input[left].sub;
 	for(ComponentId i=left; i<right; i++){
@@ -946,9 +946,9 @@ void Compression::sort_by_object(TripleItem *input, ComponentId left, ComponentI
 			left = pi;
 		}
 	}
-//	for(ComponentId pi=left; pi<right; pi++){
-//		cout << input[pi].pred << " ";
-//	}
+	//	for(ComponentId pi=left; pi<right; pi++){
+	//		cout << input[pi].pred << " ";
+	//	}
 	merge_sort_order_by_object(input, left, right, scratch);
 	sampleO = input[left].obj;
 	for(ComponentId i=left; i<right; i++){
@@ -1161,14 +1161,25 @@ void Compression::end(){
 }
 void Compression::compressionFactor(uint32 ps){
 	char* path = new char[180];
-	sprintf(path, "%s/dic_owner.tt", pathDir);
+	sprintf(path, "%s/dic_p_owner.tt", pathDir);
 	long dicSize = c.getFileSize(path);
-	sprintf(path, "%s/dic_path.tt", pathDir);
+	sprintf(path, "%s/dic_p_path.tt", pathDir);
 	dicSize += c.getFileSize(path);
-	sprintf(path, "%s/dic_predicate.tt", pathDir);
+	sprintf(path, "%s/dic_p_ref.tt", pathDir);
 	dicSize += c.getFileSize(path);
-	sprintf(path, "%s/dic_ref.tt", pathDir);
+	sprintf(path, "%s/dic_p_tree.tt", pathDir);
 	dicSize += c.getFileSize(path);
+
+	sprintf(path, "%s/dic_so_owner.tt", pathDir);
+	dicSize += c.getFileSize(path);
+	sprintf(path, "%s/dic_so_path.tt", pathDir);
+	dicSize += c.getFileSize(path);
+	sprintf(path, "%s/dic_sop_ref.tt", pathDir);
+	dicSize += c.getFileSize(path);
+	sprintf(path, "%s/dic_so_tree.tt", pathDir);
+	dicSize += c.getFileSize(path);
+	
+
 	sprintf(path, "%s/triple_table.tt", pathDir);
 	long ttableSize = c.getFileSize(path);
 	sprintf(path, "%s.nt", pathDir);

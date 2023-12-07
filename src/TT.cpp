@@ -32,7 +32,7 @@ using namespace std;
 using namespace rapidjson;
 
 // Create a dictionary from a given triple dataset
-// ./TT -d /media/rasel/hdd/RDF/datasets/lubm/paper/100m 16
+// ./TT -d ./TT -d path_to_source_NT_dataset_file path_to_triple_tree_directory
 
 // ./TT -c /media/rasel/hdd/RDF/datasets/lubm/paper/100m 16
 // ./TT -q /media/rasel/hdd/RDF/datasets/lubm/paper/100m 16 o x x x
@@ -102,137 +102,137 @@ double pet(Query query, char* secondary, const char* s, const char* p, const cha
 //	}
 //}
 ComponentId getSubObjId(Dictionary* dic, string searchFor){
-	searchFor.erase(remove(searchFor.begin(), searchFor.end(), '<'), searchFor.end());
-	searchFor.erase(remove(searchFor.begin(), searchFor.end(), '>'), searchFor.end());
+	//searchFor.erase(remove(searchFor.begin(), searchFor.end(), '<'), searchFor.end());
+	//searchFor.erase(remove(searchFor.begin(), searchFor.end(), '>'), searchFor.end());
 	searchFor.erase(remove(searchFor.begin(), searchFor.end(), '"'), searchFor.end());
 	//cout << searchFor << endl;
 	return dic->getSubObjId(&searchFor[0]);
 }
 ComponentId getPredicateId(Dictionary* dic, string searchFor){
-	searchFor.erase(remove(searchFor.begin(), searchFor.end(), '<'), searchFor.end());
-	searchFor.erase(remove(searchFor.begin(), searchFor.end(), '>'), searchFor.end());
+	//searchFor.erase(remove(searchFor.begin(), searchFor.end(), '<'), searchFor.end());
+	//searchFor.erase(remove(searchFor.begin(), searchFor.end(), '>'), searchFor.end());
 	searchFor.erase(remove(searchFor.begin(), searchFor.end(), '"'), searchFor.end());
 	//cout << searchFor << endl;
 	return dic->getPredicateId(&searchFor[0]);
 }
 
-struct Triple {
-    string subject;
-    string predicate;
-    string object;
-};
+// struct Triple {
+//     string subject;
+//     string predicate;
+//     string object;
+// };
 
-vector<Triple> parseN3Triples(string n3Data) {
-    // Define regular expressions to extract triples
-    regex tripleRegex("(.*?)\\s+(.*?)\\s+(.*?)[\\.\\;]");
-    regex literalRegex("\"(.*?)\"(@\\w+)?", regex_constants::ECMAScript | regex_constants::icase);
+// vector<Triple> parseN3Triples(string n3Data) {
+//     // Define regular expressions to extract triples
+//     regex tripleRegex("(.*?)\\s+(.*?)\\s+(.*?)[\\.\\;]");
+//     regex literalRegex("\"(.*?)\"(@\\w+)?", regex_constants::ECMAScript | regex_constants::icase);
 
-    // Parse N3 data into triples
-    vector<Triple> triples;
-    smatch match;
-    while (regex_search(n3Data, match, tripleRegex)) {
-        Triple triple;
-        triple.subject = match[1].str();
-        triple.predicate = match[2].str();
-        triple.object = match[3].str();
+//     // Parse N3 data into triples
+//     vector<Triple> triples;
+//     smatch match;
+//     while (regex_search(n3Data, match, tripleRegex)) {
+//         Triple triple;
+//         triple.subject = match[1].str();
+//         triple.predicate = match[2].str();
+//         triple.object = match[3].str();
 
-        // Check if object is a literal
-        if (regex_match(triple.object, literalRegex)) {
-            smatch literalMatch;
-            regex_search(triple.object, literalMatch, literalRegex);
-            triple.object = literalMatch[1].str();
+//         // Check if object is a literal
+//         if (regex_match(triple.object, literalRegex)) {
+//             smatch literalMatch;
+//             regex_search(triple.object, literalMatch, literalRegex);
+//             triple.object = literalMatch[1].str();
 
-            // Consume additional lines if literal has newlines
-            size_t pos = n3Data.find(literalMatch[0].str()) + literalMatch[0].str().size();
-            while (pos < n3Data.size() && n3Data[pos] == '\n') {
-                pos++;
-                size_t endpos = n3Data.find("\".", pos);
-                if (endpos == string::npos) {
-                    // Literal extends beyond current buffer, read more data
-                    char buffer[1024*1024*4];
-                    streamsize bytesread = fread(buffer, 1, sizeof(buffer), stdin);
-                    n3Data.append(buffer, bytesread);
-                    endpos = n3Data.find("\".", pos);
-                    if (endpos == string::npos) {
-                        // Literal still extends beyond current buffer, give up
-                        break;
-                    }
-                }
-                triple.object += n3Data.substr(pos, endpos - pos + 1);
-                pos = endpos + 2;
-            }
-        }
+//             // Consume additional lines if literal has newlines
+//             size_t pos = n3Data.find(literalMatch[0].str()) + literalMatch[0].str().size();
+//             while (pos < n3Data.size() && n3Data[pos] == '\n') {
+//                 pos++;
+//                 size_t endpos = n3Data.find("\".", pos);
+//                 if (endpos == string::npos) {
+//                     // Literal extends beyond current buffer, read more data
+//                     char buffer[1024*1024*4];
+//                     streamsize bytesread = fread(buffer, 1, sizeof(buffer), stdin);
+//                     n3Data.append(buffer, bytesread);
+//                     endpos = n3Data.find("\".", pos);
+//                     if (endpos == string::npos) {
+//                         // Literal still extends beyond current buffer, give up
+//                         break;
+//                     }
+//                 }
+//                 triple.object += n3Data.substr(pos, endpos - pos + 1);
+//                 pos = endpos + 2;
+//             }
+//         }
 
-        // Add triple to vector
-        //triples.push_back(triple);
-        cout << triple.subject << "\n-----\n" << triple.predicate << "\n-----\n" << triple.object << "\n======\n" << endl;
+//         // Add triple to vector
+//         //triples.push_back(triple);
+//         cout << triple.subject << "\n-----\n" << triple.predicate << "\n-----\n" << triple.object << "\n======\n" << endl;
 
-        // Remove parsed triple from N3 data
-        n3Data = match.suffix().str();
-    }
+//         // Remove parsed triple from N3 data
+//         n3Data = match.suffix().str();
+//     }
 
-    return triples;
-}
+//     return triples;
+// }
 
-int n3parser() {
+// int n3parser() {
 
-    // Open N3 data file
-    ifstream file("/media/rasel/hdd/RDF/datasets/dbpedia/dbpedia.nt");
-    if (!file.is_open()) {
-        cerr << "Failed to open file." << endl;
-        return 1;
-    }
+//     // Open N3 data file
+//     ifstream file("/media/rasel/hdd/RDF/datasets/dbpedia/dbpedia.nt");
+//     if (!file.is_open()) {
+//         cerr << "Failed to open file." << endl;
+//         return 1;
+//     }
 
-    // Regular expression to match an NT-triple
-    regex pattern(R"(([^ ]+) +([^ ]+) +((?:<[^>]+>)|(?:"(?:\\.|[^\\"])*"))(?:\^\^<[^>]+>)? *\.)");
+//     // Regular expression to match an NT-triple
+//     regex pattern(R"(([^ ]+) +([^ ]+) +((?:<[^>]+>)|(?:"(?:\\.|[^\\"])*"))(?:\^\^<[^>]+>)? *\.)");
 
-    smatch match;
-    string line;
-    string current_triple;
-    while (getline(file, line)) {
-        // Add current line to current NT-triple
-        current_triple += line;
-        // If current NT-triple ends with a '.', process it
-        if (regex_search(current_triple, match, pattern) && match[0].matched) {
-            cout << match[1] << " " << match[2] << " " << match[3] << endl;
-            current_triple.clear();
-        }
-    }
+//     smatch match;
+//     string line;
+//     string current_triple;
+//     while (getline(file, line)) {
+//         // Add current line to current NT-triple
+//         current_triple += line;
+//         // If current NT-triple ends with a '.', process it
+//         if (regex_search(current_triple, match, pattern) && match[0].matched) {
+//             cout << match[1] << " " << match[2] << " " << match[3] << endl;
+//             current_triple.clear();
+//         }
+//     }
 
-    file.close();
+//     file.close();
 
-    return 0;
-}
+//     return 0;
+// }
 
-int rdfParser() {
+// int rdfParser() {
 
-  ifstream ifs("/media/rasel/hdd/RDF/datasets/dbpedia/dbpedia.nt");
-  IStreamWrapper isw(ifs);
-  Document doc;
+//   ifstream ifs("/media/rasel/hdd/RDF/datasets/dbpedia/dbpedia.nt");
+//   IStreamWrapper isw(ifs);
+//   Document doc;
 
-  doc.ParseStream(isw);
+//   doc.ParseStream(isw);
 
-  if (!doc.IsArray()) {
-    std::cerr << "Invalid NT triples file format." << std::endl;
-    return 1;
-  }
+//   if (!doc.IsArray()) {
+//     std::cerr << "Invalid NT triples file format." << std::endl;
+//     return 1;
+//   }
 
-  for (SizeType i = 0; i < doc.Size(); i++) {
-    Value& triple = doc[i];
-    if (!triple.IsArray() || triple.Size() != 3) {
-      std::cerr << "Invalid triple format at index " << i << std::endl;
-      continue;
-    }
+//   for (SizeType i = 0; i < doc.Size(); i++) {
+//     Value& triple = doc[i];
+//     if (!triple.IsArray() || triple.Size() != 3) {
+//       std::cerr << "Invalid triple format at index " << i << std::endl;
+//       continue;
+//     }
 
-    string subject = triple[0].GetString();
-    string predicate = triple[1].GetString();
-    string object = triple[2].GetString();
+//     string subject = triple[0].GetString();
+//     string predicate = triple[1].GetString();
+//     string object = triple[2].GetString();
 
-    std::cout << "Triple #" << i + 1 << ": " << subject << " " << predicate << " " << object << std::endl;
-  }
+//     std::cout << "Triple #" << i + 1 << ": " << subject << " " << predicate << " " << object << std::endl;
+//   }
 
-  return 0;
-}
+//   return 0;
+// }
 
 bool createDirTree(const std::string full_path){
     size_t pos = 0;
@@ -388,6 +388,7 @@ int main(int argc, char** argv) {
 				}
 			} else if(p[0]=='x' && o[0]=='x'){			// s ? ?
 				uint32 subId = getSubObjId(&dic, s);
+				// printf("%d %s\n", subId, s);
 				if(subId > 0){
 					query.getPO4S(subId);
 				}
@@ -452,8 +453,7 @@ int main(int argc, char** argv) {
 					}
 				}
 			}
-			//
-			query.printResult();
+			// query.printResult();
 			if(query.resultCount > 0){
 				for(uint32 i=0; i<query.resultCount; i++){
 					cout << dic.getSubObj(query.results[i].sub) << "\t" << dic.getPredicate(query.results[i].pred) << "\t" << dic.getSubObj(query.results[i].obj) << endl;
