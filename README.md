@@ -87,7 +87,7 @@ A technique to compress RDF triples and query on compressed RDF triples data
 
 **#Example query: 	Find all triples having subject "http://www.Department6.University81.edu/GraduateStudent33". Use the p->s->o path of the triple tree for searching the triples.**
 		
-    ./TT -q ../lubm/triple_tree s http://www.Department6.University81.edu/GraduateStudent33 x x
+    ./TT -s ../lubm/triple_tree s http://www.Department6.University81.edu/GraduateStudent33 x x
 
 
   
